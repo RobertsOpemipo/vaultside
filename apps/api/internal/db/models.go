@@ -456,19 +456,20 @@ type Tenant struct {
 }
 
 type User struct {
-	ID           uuid.UUID          `json:"id"`
-	TenantID     uuid.UUID          `json:"tenant_id"`
-	Email        string             `json:"email"`
-	FullName     string             `json:"full_name"`
-	ExternalID   *string            `json:"external_id"`
-	DepartmentID pgtype.UUID        `json:"department_id"`
-	ManagerID    pgtype.UUID        `json:"manager_id"`
-	HiredOn      pgtype.Date        `json:"hired_on"`
-	Status       string             `json:"status"`
-	LastLoginAt  pgtype.Timestamptz `json:"last_login_at"`
-	CreatedAt    time.Time          `json:"created_at"`
-	UpdatedAt    time.Time          `json:"updated_at"`
-	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
+	Email             string             `json:"email"`
+	FullName          string             `json:"full_name"`
+	ExternalID        *string            `json:"external_id"`
+	DepartmentID      pgtype.UUID        `json:"department_id"`
+	ManagerID         pgtype.UUID        `json:"manager_id"`
+	HiredOn           pgtype.Date        `json:"hired_on"`
+	Status            string             `json:"status"`
+	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt         time.Time          `json:"created_at"`
+	UpdatedAt         time.Time          `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	LeaderboardOptout bool               `json:"leaderboard_optout"`
 }
 
 type UserBadge struct {

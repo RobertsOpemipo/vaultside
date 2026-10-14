@@ -105,6 +105,7 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
             r.Get("/me/streak", handlers.MyStreak)
             r.Get("/me/quests", handlers.MyQuests)
             r.Get("/me/badges", handlers.MyBadges)
+            r.Post("/me/leaderboard-optout", handlers.SetMyLeaderboardOptout)
             r.Get("/courses", handlers.ListCourses)
             r.Get("/courses/{id}", handlers.GetCourseDetail)
             r.Get("/lessons/{id}", handlers.GetLessonDetail)
@@ -137,6 +138,7 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
             r.Group(func(r chi.Router) {
                 r.Use(httpx.RequirePermission("team.view"))
                 r.Get("/team/docket", handlers.TeamDocket)
+                r.Get("/team/leaderboard", handlers.TeamLeaderboard)
             })
 
             r.Group(func(r chi.Router) {

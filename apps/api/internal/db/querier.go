@@ -64,6 +64,7 @@ type Querier interface {
 	GetCourseVersion(ctx context.Context, id uuid.UUID) (CourseVersion, error)
 	GetEnabledDefaultSSOConnection(ctx context.Context) (SsoConnection, error)
 	GetEnrollment(ctx context.Context, id uuid.UUID) (Enrollment, error)
+	GetLeaderboardOptout(ctx context.Context, id uuid.UUID) (bool, error)
 	GetLearningPath(ctx context.Context, id uuid.UUID) (LearningPath, error)
 	GetLesson(ctx context.Context, id uuid.UUID) (GetLessonRow, error)
 	GetOnboardingInstance(ctx context.Context, id uuid.UUID) (OnboardingInstance, error)
@@ -111,6 +112,9 @@ type Querier interface {
 	ListLearningPaths(ctx context.Context) ([]LearningPath, error)
 	ListLessonProgress(ctx context.Context, enrollmentID uuid.UUID) ([]ListLessonProgressRow, error)
 	ListLessons(ctx context.Context, versionID uuid.UUID) ([]ListLessonsRow, error)
+	// Direct reports of the given manager plus the manager themselves, ordered
+	// by cumulative XP. Opted-out users are excluded from ranking.
+	ListManagerLeaderboard(ctx context.Context, managerID pgtype.UUID) ([]ListManagerLeaderboardRow, error)
 	ListMyEnrollments(ctx context.Context, userID uuid.UUID) ([]ListMyEnrollmentsRow, error)
 	ListOnboardingInstanceProgress(ctx context.Context, instanceID uuid.UUID) ([]ListOnboardingInstanceProgressRow, error)
 	ListOnboardingItems(ctx context.Context, templateID uuid.UUID) ([]ListOnboardingItemsRow, error)
@@ -153,6 +157,7 @@ type Querier interface {
 	RevokeSessionsForUser(ctx context.Context, userID uuid.UUID) error
 	SaveAttemptAnswer(ctx context.Context, arg SaveAttemptAnswerParams) error
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	SetLeaderboardOptout(ctx context.Context, arg SetLeaderboardOptoutParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	SubmitAttempt(ctx context.Context, arg SubmitAttemptParams) (SubmitAttemptRow, error)
 	SumXPForUser(ctx context.Context, userID uuid.UUID) (int64, error)
