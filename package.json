@@ -14,7 +14,7 @@
     "web": "pnpm --filter web dev",
     "dev": "pnpm run stack:up && pnpm run migrate:up && pnpm --parallel -r dev",
     "test:api": "cd apps/api && go test ./... -count=1",
-    "test:isolation": "cd apps/api && go test ./internal/server -run \"Isolation|RLS\" -v -count=1",
+    "test:isolation": "cd apps/api && go test ./internal/server -run \"Isolation|RLS|SCIM\" -v -count=1",
     "test": "pnpm run test:api && pnpm -r test",
     "lint:api": "cd apps/api && golangci-lint run",
     "lint": "pnpm run lint:api && pnpm -r lint"
