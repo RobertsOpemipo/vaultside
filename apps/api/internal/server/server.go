@@ -79,6 +79,26 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         r.Get("/auth/saml/{slug}/metadata", saml.Metadata)
         r.Get("/auth/saml/{slug}/start", saml.Start)
         r.Post("/auth/saml/{slug}/acs", saml.ACS)
+        
+        scormHandlers := NewScormHandlers(pool, opts.SessionSecret)
+
+        // SCORM launch: session-authenticated.
+        r.Group(func(r chi.Router) {
+            r.Use(auth.SessionMiddleware(pool, opts.IdleTimeout))
+            if opts.DevAuth {
+                r.Use(auth.DevAuthMiddleware(pool))
+            }
+            r.Post("/scorm/attempts", scormHandlers.Launch)
+        })
+
+        // SCORM runtime: token-authenticated (cookie-less shim).
+        r.Group(func(r chi.Router) {
+            r.Use(scormHandlers.RequireToken)
+            r.Get("/scorm/attempts/{id}", scormHandlers.Get)
+            r.Post("/scorm/attempts/{id}/commit", scormHandlers.Commit)
+            r.Post("/scorm/attempts/{id}/finish", scormHandlers.Finish)
+            r.Post("/scorm/attempts/{id}/abandon", scormHandlers.Abandon)
+        })
 
         r.Group(func(r chi.Router) {
             r.Use(auth.SessionMiddleware(pool, opts.IdleTimeout))

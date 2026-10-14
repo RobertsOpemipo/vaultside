@@ -27,6 +27,14 @@ type Config struct {
     SSOSecretKeyB64 string
     SAMLCertB64     string
     SAMLKeyB64      string
+
+    // AI assist and transcription. Both default to "noop", which returns
+    // well-formed stub answers so the app runs without external calls.
+    AssistProvider     string // "noop" | "anthropic" | "openai"
+    AssistAPIKey       string
+    AssistModel        string
+    TranscribeProvider string // "noop" | "whisper" | "deepgram"
+    TranscribeAPIKey   string
 }
 
 func Load() (Config, error) {
@@ -52,6 +60,12 @@ func Load() (Config, error) {
         SSOSecretKeyB64: os.Getenv("SSO_SECRET_KEY"),
         SAMLCertB64:     os.Getenv("SAML_CERT_B64"),
         SAMLKeyB64:      os.Getenv("SAML_KEY_B64"),
+
+        AssistProvider:     getenv("ASSIST_PROVIDER", "noop"),
+        AssistAPIKey:       os.Getenv("ASSIST_API_KEY"),
+        AssistModel:        getenv("ASSIST_MODEL", "claude-sonnet-4-5"),
+        TranscribeProvider: getenv("TRANSCRIBE_PROVIDER", "noop"),
+        TranscribeAPIKey:   os.Getenv("TRANSCRIBE_API_KEY"),
     }
     if c.DatabaseURL == "" {
         return c, fmt.Errorf("DATABASE_URL is required")
@@ -70,6 +84,13 @@ func Load() (Config, error) {
     }
     if c.SAMLCertB64 == "" || c.SAMLKeyB64 == "" {
         return c, fmt.Errorf("SAML_CERT_B64 and SAML_KEY_B64 are required")
+    }
+    // If a real provider is selected, an API key is required.
+    if c.AssistProvider != "noop" && c.AssistAPIKey == "" {
+        return c, fmt.Errorf("ASSIST_API_KEY is required when ASSIST_PROVIDER=%s", c.AssistProvider)
+    }
+    if c.TranscribeProvider != "noop" && c.TranscribeAPIKey == "" {
+        return c, fmt.Errorf("TRANSCRIBE_API_KEY is required when TRANSCRIBE_PROVIDER=%s", c.TranscribeProvider)
     }
     return c, nil
 }
