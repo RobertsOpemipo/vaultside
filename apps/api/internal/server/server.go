@@ -17,16 +17,17 @@ import (
 )
 
 type Options struct {
-    DevAuth       bool
-    Storage       *storage.Client
-    Scanner       antivirus.Scanner
-    SSOSecretKey  []byte
-    SessionSecret []byte
-    SAMLKeypair   *auth.SAMLKeypair
-    AppBaseURL    string
-    APIBaseURL    string
-    SecureCookies bool
-    IdleTimeout   time.Duration
+    DevAuth        bool
+    Storage        *storage.Client
+    Scanner        antivirus.Scanner
+    SSOSecretKey   []byte
+    SessionSecret  []byte
+    SAMLKeypair    *auth.SAMLKeypair
+    AppBaseURL     string
+    APIBaseURL     string
+    SecureCookies  bool
+    IdleTimeout    time.Duration
+    AssistProvider string
 }
 
 func New(pool *pgxpool.Pool, opts Options) http.Handler {
@@ -79,7 +80,7 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         r.Get("/auth/saml/{slug}/metadata", saml.Metadata)
         r.Get("/auth/saml/{slug}/start", saml.Start)
         r.Post("/auth/saml/{slug}/acs", saml.ACS)
-        
+
         scormHandlers := NewScormHandlers(pool, opts.SessionSecret)
         xapiHandlers := NewXAPIHandlers(pool)
 
@@ -211,6 +212,11 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         r.Patch("/Groups/{id}", handlers.SCIMPatchGroup)
         r.Delete("/Groups/{id}", handlers.SCIMDeleteGroup)
     })
+
+    // AI assist. Its Mount registers /v1/assist/* and /v1/admin/assist,
+    // so it must be attached to the TOP-LEVEL router, not the /v1 subrouter.
+    assistHandlers := NewAssistHandlers(pool, opts)
+    assistHandlers.Mount(r)
 
     return r
 }

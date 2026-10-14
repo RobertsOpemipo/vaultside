@@ -59,16 +59,17 @@ func main() {
     log.Printf("storage ready (bucket=%s endpoint=%s)", cfg.S3Bucket, cfg.S3Endpoint)
 
     handler := server.New(pool.Pool, server.Options{
-        DevAuth:       cfg.DevAuth,
-        Storage:       store,
-        Scanner:       antivirus.NoopScanner{},
-        SSOSecretKey:  ssoKey,
-        SessionSecret: []byte(cfg.SessionSecret),
-        SAMLKeypair:   samlKeypair,
-        AppBaseURL:    cfg.AppBaseURL,
-        APIBaseURL:    cfg.APIBaseURL,
-        SecureCookies: cfg.Env == "production",
-        IdleTimeout:   cfg.IdleTimeout,
+        DevAuth:        cfg.DevAuth,
+        Storage:        store,
+        Scanner:        antivirus.NoopScanner{},
+        SSOSecretKey:   ssoKey,
+        SessionSecret:  []byte(cfg.SessionSecret),
+        SAMLKeypair:    samlKeypair,
+        AppBaseURL:     cfg.AppBaseURL,
+        APIBaseURL:     cfg.APIBaseURL,
+        SecureCookies:  cfg.Env == "production",
+        IdleTimeout:    cfg.IdleTimeout,
+        AssistProvider: cfg.AssistProvider,
     })
     r := middleware.Logger(handler)
 
