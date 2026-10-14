@@ -15,6 +15,8 @@ type Querier interface {
 	AddTeamMember(ctx context.Context, arg AddTeamMemberParams) error
 	ApproveOnboardingItem(ctx context.Context, arg ApproveOnboardingItemParams) (ApproveOnboardingItemRow, error)
 	AssignRole(ctx context.Context, arg AssignRoleParams) error
+	AwardBadge(ctx context.Context, arg AwardBadgeParams) (AwardBadgeRow, error)
+	AwardXP(ctx context.Context, arg AwardXPParams) (AwardXPRow, error)
 	ClearDefaultSSOForTenant(ctx context.Context, tenantID uuid.UUID) error
 	ClearTeamMembers(ctx context.Context, teamID uuid.UUID) error
 	CountActiveCertificatesForUserVersion(ctx context.Context, arg CountActiveCertificatesForUserVersionParams) (int64, error)
@@ -72,13 +74,18 @@ type Querier interface {
 	GetQuestion(ctx context.Context, id uuid.UUID) (Question, error)
 	GetRegulation(ctx context.Context, id uuid.UUID) (Regulation, error)
 	GetSSOConnection(ctx context.Context, id uuid.UUID) (SsoConnection, error)
+	GetStreak(ctx context.Context, arg GetStreakParams) (GetStreakRow, error)
 	GetTeam(ctx context.Context, id uuid.UUID) (GetTeamRow, error)
 	GetTeamByExternalID(ctx context.Context, externalID *string) (GetTeamByExternalIDRow, error)
+	GetTeamMembershipForUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 	GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error)
 	GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
+	IncrementUserQuestProgress(ctx context.Context, arg IncrementUserQuestProgressParams) (IncrementUserQuestProgressRow, error)
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) (InsertAuditLogRow, error)
+	InsertUserQuest(ctx context.Context, arg InsertUserQuestParams) (InsertUserQuestRow, error)
 	ListActiveAssignmentRules(ctx context.Context) ([]ListActiveAssignmentRulesRow, error)
+	ListActiveQuestsForUser(ctx context.Context, userID uuid.UUID) ([]ListActiveQuestsForUserRow, error)
 	ListActiveSessionsForUser(ctx context.Context, userID uuid.UUID) ([]ListActiveSessionsForUserRow, error)
 	ListAllUserRoles(ctx context.Context) ([]ListAllUserRolesRow, error)
 	ListAttemptAnswersDetailed(ctx context.Context, attemptID uuid.UUID) ([]ListAttemptAnswersDetailedRow, error)
@@ -86,8 +93,11 @@ type Querier interface {
 	ListAttestationsByUser(ctx context.Context, userID uuid.UUID) ([]ListAttestationsByUserRow, error)
 	ListAttestationsInRange(ctx context.Context, arg ListAttestationsInRangeParams) ([]ListAttestationsInRangeRow, error)
 	ListAuditLog(ctx context.Context, arg ListAuditLogParams) ([]ListAuditLogRow, error)
+	ListBadges(ctx context.Context) ([]ListBadgesRow, error)
+	ListBadgesForUserKeys(ctx context.Context, userID uuid.UUID) ([]string, error)
 	ListCertificatesForUser(ctx context.Context, userID uuid.UUID) ([]ListCertificatesForUserRow, error)
 	ListCertificatesInRange(ctx context.Context, arg ListCertificatesInRangeParams) ([]ListCertificatesInRangeRow, error)
+	ListCompletedQuestsForUser(ctx context.Context, arg ListCompletedQuestsForUserParams) ([]ListCompletedQuestsForUserRow, error)
 	ListCourseVersions(ctx context.Context, courseID uuid.UUID) ([]ListCourseVersionsRow, error)
 	ListCourses(ctx context.Context, arg ListCoursesParams) ([]ListCoursesRow, error)
 	ListDepartments(ctx context.Context) ([]ListDepartmentsRow, error)
@@ -108,14 +118,18 @@ type Querier interface {
 	ListRegulationsForCourse(ctx context.Context, courseID uuid.UUID) ([]ListRegulationsForCourseRow, error)
 	ListSCIMTokens(ctx context.Context) ([]ListSCIMTokensRow, error)
 	ListSSOConnections(ctx context.Context) ([]ListSSOConnectionsRow, error)
+	ListTeamLeaderboard(ctx context.Context, teamID uuid.UUID) ([]ListTeamLeaderboardRow, error)
 	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
+	ListTeamMissionsForUser(ctx context.Context, userID uuid.UUID) ([]ListTeamMissionsForUserRow, error)
 	ListTeams(ctx context.Context) ([]ListTeamsRow, error)
 	ListTenants(ctx context.Context) ([]ListTenantsRow, error)
+	ListUserBadges(ctx context.Context, userID uuid.UUID) ([]ListUserBadgesRow, error)
 	ListUserComplianceSnapshot(ctx context.Context) ([]ListUserComplianceSnapshotRow, error)
 	ListUserPermissions(ctx context.Context, userID uuid.UUID) ([]string, error)
 	ListUserRoles(ctx context.Context, userID uuid.UUID) ([]string, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	ListUsersForMatching(ctx context.Context) ([]ListUsersForMatchingRow, error)
+	ListXPLedgerForUser(ctx context.Context, arg ListXPLedgerForUserParams) ([]ListXPLedgerForUserRow, error)
 	MarkAssetClean(ctx context.Context, arg MarkAssetCleanParams) error
 	MarkEnrollmentCompleted(ctx context.Context, id uuid.UUID) error
 	MarkOnboardingInstanceComplete(ctx context.Context, id uuid.UUID) error
@@ -134,12 +148,15 @@ type Querier interface {
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	SubmitAttempt(ctx context.Context, arg SubmitAttemptParams) (SubmitAttemptRow, error)
+	SumXPForUser(ctx context.Context, userID uuid.UUID) (int64, error)
+	SumXPForUsersInTeam(ctx context.Context, teamID uuid.UUID) ([]SumXPForUsersInTeamRow, error)
 	TouchLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateLessonOrder(ctx context.Context, arg UpdateLessonOrderParams) error
 	UpdateSSOConnectionEnabled(ctx context.Context, arg UpdateSSOConnectionEnabledParams) error
 	UpdateTeamName(ctx context.Context, arg UpdateTeamNameParams) error
 	UpsertLessonProgress(ctx context.Context, arg UpsertLessonProgressParams) (UpsertLessonProgressRow, error)
 	UpsertOnboardingItemProgress(ctx context.Context, arg UpsertOnboardingItemProgressParams) (UpsertOnboardingItemProgressRow, error)
+	UpsertStreak(ctx context.Context, arg UpsertStreakParams) (UpsertStreakRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

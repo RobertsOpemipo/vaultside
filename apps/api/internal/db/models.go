@@ -86,6 +86,18 @@ type AuditLog struct {
 	CreatedAt  time.Time   `json:"created_at"`
 }
 
+type Badge struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Key         string    `json:"key"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	PointsValue int32     `json:"points_value"`
+	ThemeMeta   []byte    `json:"theme_meta"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type Certificate struct {
 	ID              uuid.UUID          `json:"id"`
 	TenantID        uuid.UUID          `json:"tenant_id"`
@@ -279,6 +291,20 @@ type PathItem struct {
 	IsRequired bool      `json:"is_required"`
 }
 
+type Quest struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Key         string    `json:"key"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Cadence     string    `json:"cadence"`
+	Kind        string    `json:"kind"`
+	TargetValue int32     `json:"target_value"`
+	XpReward    int32     `json:"xp_reward"`
+	ThemeMeta   []byte    `json:"theme_meta"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type Question struct {
 	ID            uuid.UUID `json:"id"`
 	TenantID      uuid.UUID `json:"tenant_id"`
@@ -379,6 +405,17 @@ type SsoConnection struct {
 	CreatedBy           pgtype.UUID `json:"created_by"`
 }
 
+type Streak struct {
+	TenantID             uuid.UUID   `json:"tenant_id"`
+	UserID               uuid.UUID   `json:"user_id"`
+	CurrentDays          int32       `json:"current_days"`
+	LongestDays          int32       `json:"longest_days"`
+	LastActivityOn       pgtype.Date `json:"last_activity_on"`
+	FreezesUsedThisMonth int32       `json:"freezes_used_this_month"`
+	FreezeMonth          *string     `json:"freeze_month"`
+	UpdatedAt            time.Time   `json:"updated_at"`
+}
+
 type Team struct {
 	ID           uuid.UUID   `json:"id"`
 	TenantID     uuid.UUID   `json:"tenant_id"`
@@ -393,6 +430,19 @@ type TeamMember struct {
 	UserID    uuid.UUID `json:"user_id"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type TeamMission struct {
+	ID           uuid.UUID   `json:"id"`
+	TenantID     uuid.UUID   `json:"tenant_id"`
+	TeamID       uuid.UUID   `json:"team_id"`
+	Title        string      `json:"title"`
+	Description  string      `json:"description"`
+	TargetValue  int32       `json:"target_value"`
+	CurrentValue int32       `json:"current_value"`
+	StartsOn     pgtype.Date `json:"starts_on"`
+	EndsOn       pgtype.Date `json:"ends_on"`
+	CreatedAt    time.Time   `json:"created_at"`
 }
 
 type Tenant struct {
@@ -421,6 +471,25 @@ type User struct {
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type UserBadge struct {
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	BadgeID   uuid.UUID `json:"badge_id"`
+	AwardedAt time.Time `json:"awarded_at"`
+}
+
+type UserQuest struct {
+	ID          uuid.UUID          `json:"id"`
+	TenantID    uuid.UUID          `json:"tenant_id"`
+	UserID      uuid.UUID          `json:"user_id"`
+	QuestID     uuid.UUID          `json:"quest_id"`
+	Progress    int32              `json:"progress"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt   time.Time          `json:"created_at"`
+}
+
 type UserRole struct {
 	ID        uuid.UUID   `json:"id"`
 	TenantID  uuid.UUID   `json:"tenant_id"`
@@ -441,4 +510,15 @@ type XapiStatement struct {
 	ObjectID    string      `json:"object_id"`
 	Raw         []byte      `json:"raw"`
 	StoredAt    time.Time   `json:"stored_at"`
+}
+
+type XpLedger struct {
+	ID        int64       `json:"id"`
+	TenantID  uuid.UUID   `json:"tenant_id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	Delta     int32       `json:"delta"`
+	Reason    string      `json:"reason"`
+	RefType   *string     `json:"ref_type"`
+	RefID     pgtype.UUID `json:"ref_id"`
+	CreatedAt time.Time   `json:"created_at"`
 }
