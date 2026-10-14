@@ -11,6 +11,7 @@ type Claims struct {
     TenantSlug  string
     UserID      uuid.UUID
     UserEmail   string
+    SessionID   uuid.UUID
     UserRoles   []string
     Permissions []string
 }

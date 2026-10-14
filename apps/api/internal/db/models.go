@@ -347,15 +347,16 @@ type ScormPackage struct {
 }
 
 type Session struct {
-	ID        uuid.UUID          `json:"id"`
-	TenantID  uuid.UUID          `json:"tenant_id"`
-	UserID    uuid.UUID          `json:"user_id"`
-	TokenHash string             `json:"token_hash"`
-	Ip        *netip.Addr        `json:"ip"`
-	UserAgent *string            `json:"user_agent"`
-	CreatedAt time.Time          `json:"created_at"`
-	ExpiresAt time.Time          `json:"expires_at"`
-	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	ID         uuid.UUID          `json:"id"`
+	TenantID   uuid.UUID          `json:"tenant_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	TokenHash  string             `json:"token_hash"`
+	Ip         *netip.Addr        `json:"ip"`
+	UserAgent  *string            `json:"user_agent"`
+	CreatedAt  time.Time          `json:"created_at"`
+	ExpiresAt  time.Time          `json:"expires_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+	LastSeenAt time.Time          `json:"last_seen_at"`
 }
 
 type SsoConnection struct {

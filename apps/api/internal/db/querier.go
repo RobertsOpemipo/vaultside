@@ -79,6 +79,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) (InsertAuditLogRow, error)
 	ListActiveAssignmentRules(ctx context.Context) ([]ListActiveAssignmentRulesRow, error)
+	ListActiveSessionsForUser(ctx context.Context, userID uuid.UUID) ([]ListActiveSessionsForUserRow, error)
 	ListAllUserRoles(ctx context.Context) ([]ListAllUserRolesRow, error)
 	ListAttemptAnswersDetailed(ctx context.Context, attemptID uuid.UUID) ([]ListAttemptAnswersDetailedRow, error)
 	ListAttemptsInRange(ctx context.Context, arg ListAttemptsInRangeParams) ([]ListAttemptsInRangeRow, error)
@@ -124,8 +125,10 @@ type Querier interface {
 	RemoveTeamMember(ctx context.Context, arg RemoveTeamMemberParams) error
 	ResolveTenantBySlug(ctx context.Context, slug string) (ResolveTenantBySlugRow, error)
 	RevokeCertificate(ctx context.Context, arg RevokeCertificateParams) error
+	RevokeOtherSessions(ctx context.Context, arg RevokeOtherSessionsParams) error
 	RevokeSCIMToken(ctx context.Context, id uuid.UUID) error
 	RevokeSession(ctx context.Context, id uuid.UUID) error
+	RevokeSessionByIDForUser(ctx context.Context, arg RevokeSessionByIDForUserParams) error
 	RevokeSessionsForUser(ctx context.Context, userID uuid.UUID) error
 	SaveAttemptAnswer(ctx context.Context, arg SaveAttemptAnswerParams) error
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error

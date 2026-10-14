@@ -4,19 +4,18 @@ import (
     "context"
     "log"
     "net/http"
+    "time"
 
     "github.com/jackc/pgx/v5"
     "github.com/jackc/pgx/v5/pgxpool"
 )
 
-// SessionMiddleware reads the session cookie, resolves the tenant and user
-// via the SECURITY DEFINER function, then loads roles and permissions inside
-// a short transaction. If no valid cookie is present it does nothing and
-// lets the next middleware decide (typically DevAuthMiddleware).
-func SessionMiddleware(pool *pgxpool.Pool) func(http.Handler) http.Handler {
+// SessionMiddleware resolves the session cookie, enforces an idle timeout
+// in addition to the absolute expiry the DB already checks, and populates
+// claims with roles and permissions.
+func SessionMiddleware(pool *pgxpool.Pool, idleTimeout time.Duration) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            // Respect an already-authenticated context.
             if _, ok := FromContext(r.Context()); ok {
                 next.ServeHTTP(w, r)
                 return
@@ -33,6 +32,20 @@ func SessionMiddleware(pool *pgxpool.Pool) func(http.Handler) http.Handler {
                 next.ServeHTTP(w, r)
                 return
             }
+
+            if idleTimeout > 0 && time.Since(sess.LastSeenAt) > idleTimeout {
+                log.Printf("auth: session %s idle for %s, revoking",
+                    sess.SessionID, time.Since(sess.LastSeenAt))
+                _, _ = pool.Exec(r.Context(),
+                    `UPDATE sessions SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL`,
+                    sess.SessionID)
+                next.ServeHTTP(w, r)
+                return
+            }
+
+            // Best-effort touch, rate-limited server-side to once per 5 min.
+            _, _ = pool.Exec(r.Context(),
+                `SELECT touch_session($1)`, sess.SessionID)
 
             tx, err := pool.BeginTx(r.Context(), pgx.TxOptions{})
             if err != nil {
@@ -78,6 +91,7 @@ func SessionMiddleware(pool *pgxpool.Pool) func(http.Handler) http.Handler {
                 TenantSlug:  tenantSlug,
                 UserID:      sess.UserID,
                 UserEmail:   sess.Email,
+                SessionID:   sess.SessionID,
                 UserRoles:   roles,
                 Permissions: perms,
             }

@@ -2,6 +2,7 @@ package server
 
 import (
     "net/http"
+    "time"
 
     "github.com/go-chi/chi/v5"
     "github.com/go-chi/chi/v5/middleware"
@@ -25,6 +26,7 @@ type Options struct {
     AppBaseURL    string
     APIBaseURL    string
     SecureCookies bool
+    IdleTimeout   time.Duration
 }
 
 func New(pool *pgxpool.Pool, opts Options) http.Handler {
@@ -79,12 +81,12 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         r.Post("/auth/saml/{slug}/acs", saml.ACS)
 
         r.Group(func(r chi.Router) {
-            r.Use(auth.SessionMiddleware(pool))
+            r.Use(auth.SessionMiddleware(pool, opts.IdleTimeout))
             r.Post("/auth/logout", handlers.Logout(pool))
         })
 
         r.Group(func(r chi.Router) {
-            r.Use(auth.SessionMiddleware(pool))
+            r.Use(auth.SessionMiddleware(pool, opts.IdleTimeout))
             if opts.DevAuth {
                 r.Use(auth.DevAuthMiddleware(pool))
             }
@@ -95,6 +97,9 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
             r.Get("/me/enrollments", handlers.ListMyEnrollments)
             r.Get("/me/attestations", handlers.ListMyAttestations)
             r.Get("/me/certificates", handlers.ListMyCertificates)
+            r.Get("/me/sessions", handlers.ListMySessions)
+            r.Post("/me/sessions/revoke-all", handlers.RevokeOtherSessions)
+            r.Delete("/me/sessions/{id}", handlers.RevokeSessionByID)
             r.Get("/courses", handlers.ListCourses)
             r.Get("/courses/{id}", handlers.GetCourseDetail)
             r.Get("/lessons/{id}", handlers.GetLessonDetail)

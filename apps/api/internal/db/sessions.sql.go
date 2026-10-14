@@ -58,12 +58,93 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context) error {
 	return err
 }
 
+const listActiveSessionsForUser = `-- name: ListActiveSessionsForUser :many
+SELECT id, ip, user_agent, created_at, last_seen_at, expires_at
+FROM sessions
+WHERE user_id = $1
+  AND revoked_at IS NULL
+  AND expires_at > now()
+ORDER BY last_seen_at DESC
+`
+
+type ListActiveSessionsForUserRow struct {
+	ID         uuid.UUID   `json:"id"`
+	Ip         *netip.Addr `json:"ip"`
+	UserAgent  *string     `json:"user_agent"`
+	CreatedAt  time.Time   `json:"created_at"`
+	LastSeenAt time.Time   `json:"last_seen_at"`
+	ExpiresAt  time.Time   `json:"expires_at"`
+}
+
+func (q *Queries) ListActiveSessionsForUser(ctx context.Context, userID uuid.UUID) ([]ListActiveSessionsForUserRow, error) {
+	rows, err := q.db.Query(ctx, listActiveSessionsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListActiveSessionsForUserRow
+	for rows.Next() {
+		var i ListActiveSessionsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Ip,
+			&i.UserAgent,
+			&i.CreatedAt,
+			&i.LastSeenAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const revokeOtherSessions = `-- name: RevokeOtherSessions :exec
+UPDATE sessions
+SET revoked_at = now()
+WHERE user_id = $1
+  AND id <> $2
+  AND revoked_at IS NULL
+`
+
+type RevokeOtherSessionsParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	KeepID uuid.UUID `json:"keep_id"`
+}
+
+func (q *Queries) RevokeOtherSessions(ctx context.Context, arg RevokeOtherSessionsParams) error {
+	_, err := q.db.Exec(ctx, revokeOtherSessions, arg.UserID, arg.KeepID)
+	return err
+}
+
 const revokeSession = `-- name: RevokeSession :exec
 UPDATE sessions SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL
 `
 
 func (q *Queries) RevokeSession(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, revokeSession, id)
+	return err
+}
+
+const revokeSessionByIDForUser = `-- name: RevokeSessionByIDForUser :exec
+UPDATE sessions
+SET revoked_at = now()
+WHERE id = $1
+  AND user_id = $2
+  AND revoked_at IS NULL
+`
+
+type RevokeSessionByIDForUserParams struct {
+	SessionID uuid.UUID `json:"session_id"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) RevokeSessionByIDForUser(ctx context.Context, arg RevokeSessionByIDForUserParams) error {
+	_, err := q.db.Exec(ctx, revokeSessionByIDForUser, arg.SessionID, arg.UserID)
 	return err
 }
 

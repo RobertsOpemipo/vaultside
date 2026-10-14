@@ -68,6 +68,7 @@ func main() {
         AppBaseURL:    cfg.AppBaseURL,
         APIBaseURL:    cfg.APIBaseURL,
         SecureCookies: cfg.Env == "production",
+        IdleTimeout:   cfg.IdleTimeout,
     })
     r := middleware.Logger(handler)
 

@@ -25,10 +25,11 @@ const (
     SessionAbsoluteTTL = 7 * 24 * time.Hour
 )
 
-var ErrSessionNotFound = errors.New("auth: session not found")
+var (
+    ErrSessionNotFound = errors.New("auth: session not found")
+    ErrSessionIdle     = errors.New("auth: session idle timeout")
+)
 
-// GenerateSessionToken returns (raw, hash) where raw is what the client
-// receives in a cookie and hash is the hex SHA-256 that we persist.
 func GenerateSessionToken() (string, string, error) {
     b := make([]byte, 32)
     if _, err := rand.Read(b); err != nil {
@@ -39,13 +40,11 @@ func GenerateSessionToken() (string, string, error) {
     return raw, hex.EncodeToString(sum[:]), nil
 }
 
-// HashToken returns the hex SHA-256 of a raw session token.
 func HashToken(raw string) string {
     sum := sha256.Sum256([]byte(raw))
     return hex.EncodeToString(sum[:])
 }
 
-// CreateSession inserts a new session and returns (sessionID, rawToken, expiresAt).
 func CreateSession(
     ctx context.Context,
     q *db.Queries,
@@ -74,18 +73,16 @@ func CreateSession(
     return row.ID, raw, row.ExpiresAt, nil
 }
 
-// ResolvedSession is what the middleware needs after resolving a cookie.
 type ResolvedSession struct {
-    SessionID uuid.UUID
-    TenantID  uuid.UUID
-    UserID    uuid.UUID
-    Email     string
-    FullName  string
-    ExpiresAt time.Time
+    SessionID  uuid.UUID
+    TenantID   uuid.UUID
+    UserID     uuid.UUID
+    Email      string
+    FullName   string
+    ExpiresAt  time.Time
+    LastSeenAt time.Time
 }
 
-// ResolveSessionFromToken uses the SECURITY DEFINER resolver so it works
-// before app.tenant_id is set.
 func ResolveSessionFromToken(ctx context.Context, pool *pgxpool.Pool, rawToken string) (*ResolvedSession, error) {
     hash := HashToken(rawToken)
 
@@ -94,14 +91,15 @@ func ResolveSessionFromToken(ctx context.Context, pool *pgxpool.Pool, rawToken s
         tid      uuid.UUID
         uid      uuid.UUID
         expires  time.Time
+        lastSeen time.Time
         email    string
         fullName string
     )
     err := pool.QueryRow(ctx,
-        `SELECT session_id, tenant_id, user_id, expires_at, user_email, user_full_name
+        `SELECT session_id, tenant_id, user_id, expires_at, last_seen_at, user_email, user_full_name
            FROM resolve_session_by_hash($1)`,
         hash,
-    ).Scan(&sid, &tid, &uid, &expires, &email, &fullName)
+    ).Scan(&sid, &tid, &uid, &expires, &lastSeen, &email, &fullName)
     if err != nil {
         if errors.Is(err, pgx.ErrNoRows) {
             return nil, ErrSessionNotFound
@@ -109,17 +107,16 @@ func ResolveSessionFromToken(ctx context.Context, pool *pgxpool.Pool, rawToken s
         return nil, err
     }
     return &ResolvedSession{
-        SessionID: sid,
-        TenantID:  tid,
-        UserID:    uid,
-        Email:     email,
-        FullName:  fullName,
-        ExpiresAt: expires,
+        SessionID:  sid,
+        TenantID:   tid,
+        UserID:     uid,
+        Email:      email,
+        FullName:   fullName,
+        ExpiresAt:  expires,
+        LastSeenAt: lastSeen,
     }, nil
 }
 
-// SetSessionCookie writes the session cookie with conservative attributes.
-// The `secure` flag should be true in production behind HTTPS.
 func SetSessionCookie(w http.ResponseWriter, rawToken string, expires time.Time, secure bool) {
     maxAge := int(time.Until(expires).Seconds())
     if maxAge < 1 {
@@ -137,7 +134,6 @@ func SetSessionCookie(w http.ResponseWriter, rawToken string, expires time.Time,
     })
 }
 
-// ClearSessionCookie expires the cookie on the client.
 func ClearSessionCookie(w http.ResponseWriter) {
     http.SetCookie(w, &http.Cookie{
         Name:     SessionCookieName,
