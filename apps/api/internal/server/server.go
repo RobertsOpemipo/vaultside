@@ -81,14 +81,17 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         r.Post("/auth/saml/{slug}/acs", saml.ACS)
         
         scormHandlers := NewScormHandlers(pool, opts.SessionSecret)
+        xapiHandlers := NewXAPIHandlers(pool)
 
-        // SCORM launch: session-authenticated.
+        // SCORM launch + xAPI: session-authenticated.
         r.Group(func(r chi.Router) {
             r.Use(auth.SessionMiddleware(pool, opts.IdleTimeout))
             if opts.DevAuth {
                 r.Use(auth.DevAuthMiddleware(pool))
             }
             r.Post("/scorm/attempts", scormHandlers.Launch)
+            r.Post("/xapi/statements", xapiHandlers.Post)
+            r.Get("/xapi/statements", xapiHandlers.List)
         })
 
         // SCORM runtime: token-authenticated (cookie-less shim).
