@@ -23,14 +23,15 @@ type progressRequest struct {
 }
 
 type progressResponse struct {
-    ID                  string `json:"id"`
-    Status              string `json:"status"`
-    SecondsViewed       int32  `json:"seconds_viewed"`
-    EnrollmentCompleted bool   `json:"enrollment_completed"`
-    XPAwarded           int32  `json:"xp_awarded"`
-    TotalXP             int64  `json:"total_xp"`
-    Level               int    `json:"level"`
-    CurrentStreakDays   int32  `json:"current_streak_days"`
+    ID                  string   `json:"id"`
+    Status              string   `json:"status"`
+    SecondsViewed       int32    `json:"seconds_viewed"`
+    EnrollmentCompleted bool     `json:"enrollment_completed"`
+    XPAwarded           int32    `json:"xp_awarded"`
+    TotalXP             int64    `json:"total_xp"`
+    Level               int      `json:"level"`
+    CurrentStreakDays   int32    `json:"current_streak_days"`
+    BadgesAwarded       []string `json:"badges_awarded,omitempty"`
 }
 
 func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +112,7 @@ func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
     // ---------------- gamification ----------------
     var xpAwarded int32
     streakDays := int32(0)
+    var badgesAwarded []string
 
     if req.Status == "completed" {
         awarded, _ := gamification.AwardOnce(
@@ -124,6 +126,12 @@ func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
         sr, err := gamification.TouchStreak(r.Context(), q, claims.TenantID, claims.UserID, time.Now())
         if err == nil {
             streakDays = sr.CurrentDays
+        }
+
+        ev, err := gamification.BadgeState(r.Context(), q, claims.TenantID, claims.UserID)
+        if err == nil {
+            badgesAwarded, _ = gamification.CheckAndAwardBadges(
+                r.Context(), q, claims.TenantID, claims.UserID, ev)
         }
     }
 
@@ -139,6 +147,7 @@ func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
         TotalXP:             total,
         Level:               level,
         CurrentStreakDays:   streakDays,
+        BadgesAwarded:       badgesAwarded,
     })
 }
 

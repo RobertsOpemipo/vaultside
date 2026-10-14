@@ -21,7 +21,9 @@ type Querier interface {
 	ClearTeamMembers(ctx context.Context, teamID uuid.UUID) error
 	CountActiveCertificatesForUserVersion(ctx context.Context, arg CountActiveCertificatesForUserVersionParams) (int64, error)
 	CountAttestationsForUserRegulation(ctx context.Context, arg CountAttestationsForUserRegulationParams) (int64, error)
+	CountCompletedCoursesForUser(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountCompletedLessons(ctx context.Context, enrollmentID uuid.UUID) (int64, error)
+	CountCompletedLessonsForUser(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountCompliantInDepartmentForRegulation(ctx context.Context, arg CountCompliantInDepartmentForRegulationParams) (int64, error)
 	CountDepartmentHeadcount(ctx context.Context, departmentID pgtype.UUID) (int64, error)
 	CountEnrollmentsByStatusForUser(ctx context.Context, userID uuid.UUID) ([]CountEnrollmentsByStatusForUserRow, error)

@@ -104,6 +104,7 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
             r.Get("/me/xp/ledger", handlers.MyXPLedger)
             r.Get("/me/streak", handlers.MyStreak)
             r.Get("/me/quests", handlers.MyQuests)
+            r.Get("/me/badges", handlers.MyBadges)
             r.Get("/courses", handlers.ListCourses)
             r.Get("/courses/{id}", handlers.GetCourseDetail)
             r.Get("/lessons/{id}", handlers.GetLessonDetail)

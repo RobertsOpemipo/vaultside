@@ -17,6 +17,7 @@ const files = [
   "scripts/seed-content.sql",
   "scripts/seed-phase3.sql",
   "scripts/seed-phase4.sql",
+  "scripts/seed-gamification.sql",
 ];
 
 for (const f of files) {
@@ -34,4 +35,3 @@ for (const f of files) {
   });
   if ((r.status ?? 1) !== 0) process.exit(r.status ?? 1);
 }
-
