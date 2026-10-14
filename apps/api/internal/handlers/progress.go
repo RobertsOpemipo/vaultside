@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "errors"
     "net/http"
+    "time"
 
     "github.com/go-chi/chi/v5"
     "github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 
     "github.com/vaultside/vaultside/apps/api/internal/auth"
     "github.com/vaultside/vaultside/apps/api/internal/db"
+    "github.com/vaultside/vaultside/apps/api/internal/gamification"
     "github.com/vaultside/vaultside/apps/api/internal/httpx"
 )
 
@@ -25,6 +27,10 @@ type progressResponse struct {
     Status              string `json:"status"`
     SecondsViewed       int32  `json:"seconds_viewed"`
     EnrollmentCompleted bool   `json:"enrollment_completed"`
+    XPAwarded           int32  `json:"xp_awarded"`
+    TotalXP             int64  `json:"total_xp"`
+    Level               int    `json:"level"`
+    CurrentStreakDays   int32  `json:"current_streak_days"`
 }
 
 func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
@@ -102,36 +108,53 @@ func RecordLessonProgress(w http.ResponseWriter, r *http.Request) {
         completed = maybeCompleteEnrollment(r, q, en)
     }
 
+    // ---------------- gamification ----------------
+    var xpAwarded int32
+    streakDays := int32(0)
+
+    if req.Status == "completed" {
+        awarded, _ := gamification.AwardOnce(
+            r.Context(), q, claims.TenantID, claims.UserID,
+            gamification.ReasonLesson, "lesson", lessonID,
+            gamification.XPLesson,
+        )
+        if awarded {
+            xpAwarded = gamification.XPLesson
+        }
+        sr, err := gamification.TouchStreak(r.Context(), q, claims.TenantID, claims.UserID, time.Now())
+        if err == nil {
+            streakDays = sr.CurrentDays
+        }
+    }
+
+    total, _ := q.SumXPForUser(r.Context(), claims.UserID)
+    level := gamification.LevelForXP(total)
+
     httpx.JSON(w, http.StatusOK, progressResponse{
         ID:                  row.ID.String(),
         Status:              row.Status,
         SecondsViewed:       row.SecondsViewed,
         EnrollmentCompleted: completed,
+        XPAwarded:           xpAwarded,
+        TotalXP:             total,
+        Level:               level,
+        CurrentStreakDays:   streakDays,
     })
 }
 
-// maybeCompleteEnrollment flips enrollment to completed when:
-//   1. every lesson in the version is complete, AND
-//   2a. there is no assessment on the version, OR
-//   2b. the learner has a passing attempt on the version's assessment.
-//
-// After a successful completion, it calls issueCertificateIfNeeded.
 func maybeCompleteEnrollment(r *http.Request, q *db.Queries, en db.Enrollment) bool {
     if en.Status == "completed" {
         return true
     }
-
     lessons, err := q.ListLessons(r.Context(), en.CourseVersionID)
     if err != nil || len(lessons) == 0 {
         return false
     }
     total := int64(len(lessons))
-
     done, err := q.CountCompletedLessons(r.Context(), en.ID)
     if err != nil || done < total {
         return false
     }
-
     ass, err := q.GetAssessmentForVersion(r.Context(), en.CourseVersionID)
     switch {
     case err == nil:
@@ -143,16 +166,12 @@ func maybeCompleteEnrollment(r *http.Request, q *db.Queries, en db.Enrollment) b
             return false
         }
     case errors.Is(err, pgx.ErrNoRows):
-        // no assessment — lessons alone are enough
     default:
         return false
     }
-
     if err := q.MarkEnrollmentCompleted(r.Context(), en.ID); err != nil {
         return false
     }
-
-    // Refetch to get the updated status, then auto-issue a certificate.
     if updated, err := q.GetEnrollment(r.Context(), en.ID); err == nil {
         issueCertificateIfNeeded(r.Context(), q, updated)
     }

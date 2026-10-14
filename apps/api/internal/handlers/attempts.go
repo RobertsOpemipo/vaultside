@@ -5,6 +5,7 @@ import (
     "errors"
     "math"
     "net/http"
+    "time"
 
     "github.com/go-chi/chi/v5"
     "github.com/google/uuid"
@@ -13,10 +14,9 @@ import (
 
     "github.com/vaultside/vaultside/apps/api/internal/auth"
     "github.com/vaultside/vaultside/apps/api/internal/db"
+    "github.com/vaultside/vaultside/apps/api/internal/gamification"
     "github.com/vaultside/vaultside/apps/api/internal/httpx"
 )
-
-// ---------------- StartAttempt ----------------
 
 type questionOptionView struct {
     ID       string `json:"id"`
@@ -140,8 +140,6 @@ func StartAttempt(w http.ResponseWriter, r *http.Request) {
     })
 }
 
-// ---------------- SaveAnswer ----------------
-
 type saveAnswerRequest struct {
     QuestionID string `json:"question_id"`
     OptionID   string `json:"option_id"`
@@ -211,8 +209,6 @@ func SaveAnswer(w http.ResponseWriter, r *http.Request) {
     httpx.JSON(w, http.StatusOK, map[string]any{"saved": true})
 }
 
-// ---------------- SubmitAttempt ----------------
-
 type perQuestionResult struct {
     QuestionID     string `json:"question_id"`
     SelectedID     string `json:"selected_option_id,omitempty"`
@@ -223,13 +219,17 @@ type perQuestionResult struct {
 }
 
 type submitAttemptResponse struct {
-    AttemptID string              `json:"attempt_id"`
-    Score     int32               `json:"score"`
-    Passed    bool                `json:"passed"`
-    PassMark  int32               `json:"pass_mark"`
-    Correct   int                 `json:"correct"`
-    Total     int                 `json:"total"`
-    Results   []perQuestionResult `json:"results"`
+    AttemptID         string              `json:"attempt_id"`
+    Score             int32               `json:"score"`
+    Passed            bool                `json:"passed"`
+    PassMark          int32               `json:"pass_mark"`
+    Correct           int                 `json:"correct"`
+    Total             int                 `json:"total"`
+    Results           []perQuestionResult `json:"results"`
+    XPAwarded         int32               `json:"xp_awarded"`
+    TotalXP           int64               `json:"total_xp"`
+    Level             int                 `json:"level"`
+    CurrentStreakDays int32               `json:"current_streak_days"`
 }
 
 func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
@@ -332,20 +332,43 @@ func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
         }
     }
 
+    // ---------------- gamification ----------------
+    var xpAwarded int32
+    streakDays := int32(0)
+
+    if passed {
+        awarded, _ := gamification.AwardOnce(
+            r.Context(), q, claims.TenantID, claims.UserID,
+            gamification.ReasonQuizPass, "assessment", ass.ID,
+            gamification.XPQuizPass,
+        )
+        if awarded {
+            xpAwarded = gamification.XPQuizPass
+        }
+        sr, err := gamification.TouchStreak(r.Context(), q, claims.TenantID, claims.UserID, time.Now())
+        if err == nil {
+            streakDays = sr.CurrentDays
+        }
+    }
+
+    total, _ := q.SumXPForUser(r.Context(), claims.UserID)
+    level := gamification.LevelForXP(total)
+
     httpx.JSON(w, http.StatusOK, submitAttemptResponse{
-        AttemptID: attemptID.String(),
-        Score:     score,
-        Passed:    passed,
-        PassMark:  ass.PassMark,
-        Correct:   correct,
-        Total:     len(questions),
-        Results:   results,
+        AttemptID:         attemptID.String(),
+        Score:             score,
+        Passed:            passed,
+        PassMark:          ass.PassMark,
+        Correct:           correct,
+        Total:             len(questions),
+        Results:           results,
+        XPAwarded:         xpAwarded,
+        TotalXP:           total,
+        Level:             level,
+        CurrentStreakDays: streakDays,
     })
 }
 
-// tryCompleteAfterPass marks the enrollment complete when the learner has both
-// passed the assessment AND finished every lesson. It then auto-issues a
-// certificate via issueCertificateIfNeeded.
 func tryCompleteAfterPass(r *http.Request, q *db.Queries, en db.Enrollment) {
     if en.Status == "completed" {
         return

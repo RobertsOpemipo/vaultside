@@ -118,3 +118,8 @@ LEFT JOIN xp_ledger xl ON xl.user_id = u.id
 WHERE tm.team_id = $1
 GROUP BY u.id, u.full_name
 ORDER BY total_xp DESC, u.full_name;
+-- name: HasXPAwardForRef :one
+SELECT EXISTS(
+  SELECT 1 FROM xp_ledger
+  WHERE user_id = $1 AND reason = $2 AND ref_type = $3 AND ref_id = $4
+) AS has;

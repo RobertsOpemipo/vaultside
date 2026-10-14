@@ -134,6 +134,32 @@ func (q *Queries) GetTeamMembershipForUser(ctx context.Context, userID uuid.UUID
 	return items, nil
 }
 
+const hasXPAwardForRef = `-- name: HasXPAwardForRef :one
+SELECT EXISTS(
+  SELECT 1 FROM xp_ledger
+  WHERE user_id = $1 AND reason = $2 AND ref_type = $3 AND ref_id = $4
+) AS has
+`
+
+type HasXPAwardForRefParams struct {
+	UserID  uuid.UUID   `json:"user_id"`
+	Reason  string      `json:"reason"`
+	RefType *string     `json:"ref_type"`
+	RefID   pgtype.UUID `json:"ref_id"`
+}
+
+func (q *Queries) HasXPAwardForRef(ctx context.Context, arg HasXPAwardForRefParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasXPAwardForRef,
+		arg.UserID,
+		arg.Reason,
+		arg.RefType,
+		arg.RefID,
+	)
+	var has bool
+	err := row.Scan(&has)
+	return has, err
+}
+
 const incrementUserQuestProgress = `-- name: IncrementUserQuestProgress :one
 UPDATE user_quests
 SET progress = user_quests.progress + $2,

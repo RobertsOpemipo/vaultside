@@ -81,6 +81,7 @@ type Querier interface {
 	GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error)
 	GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
+	HasXPAwardForRef(ctx context.Context, arg HasXPAwardForRefParams) (bool, error)
 	IncrementUserQuestProgress(ctx context.Context, arg IncrementUserQuestProgressParams) (IncrementUserQuestProgressRow, error)
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) (InsertAuditLogRow, error)
 	InsertUserQuest(ctx context.Context, arg InsertUserQuestParams) (InsertUserQuestRow, error)
