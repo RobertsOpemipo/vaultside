@@ -1,0 +1,36 @@
+@theme {
+  --color-ink: #1f2430;
+  --color-ink-muted: #4a5262;
+  --color-paper: #f6f1e7;
+  --color-card: #fffdf8;
+  --color-harbour: #0f5c5a;
+  --color-marigold: #e8a317;
+  --color-vermilion: #b8381f;
+  --color-moss: #1e6b43;
+  --color-amber-text: #8a5200;
+  --color-cobalt: #2f4ba0;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-card: 14px;
+  --shadow-paper: 0 1px 0 rgb(31 36 48 / .06), 0 8px 18px -10px rgb(31 36 48 / .35);
+  --shadow-lift: 0 2px 0 rgb(31 36 48 / .08), 0 18px 30px -14px rgb(31 36 48 / .45);
+
+  --ease-paper: cubic-bezier(.22, 1, .36, 1);
+  --duration-fast: 140ms;
+  --duration-base: 260ms;
+  --duration-slow: 520ms;
+}
+
+:root[data-theme="dark"] {
+  --color-ink: #ece7dc;
+  --color-ink-muted: #a9b0bd;
+  --color-paper: #14181f;
+  --color-card: #1c222b;
+  --color-harbour: #5fc4be;
+  --color-marigold: #f2b84b;
+}
+
+:focus-visible { outline: 3px solid var(--color-harbour); outline-offset: 3px; }

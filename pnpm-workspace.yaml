@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 11+ reads these here, not from package.json#pnpm.
+# `allowBuilds` is a { name: true|false } map and replaces the old
+# onlyBuiltDependencies / neverBuiltDependencies / ignoredBuiltDependencies lists.
+allowBuilds:
+  unrs-resolver: true
+  sharp: true
+  esbuild: true

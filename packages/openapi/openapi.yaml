@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: Vaultside API
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      responses:
+        "200": { description: OK }
+  /readyz:
+    get:
+      operationId: readyz
+      responses:
+        "200": { description: Ready }

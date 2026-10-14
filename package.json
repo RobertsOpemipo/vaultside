@@ -1,0 +1,28 @@
+{
+  "name": "vaultside",
+  "private": true,
+  "scripts": {
+    "stack:up": "docker compose up -d postgres minio createbucket mailpit keycloak",
+    "stack:down": "docker compose down",
+    "logs": "docker compose logs -f --tail=100",
+    "migrate:up": "node scripts/migrate.mjs up",
+    "migrate:down": "node scripts/migrate.mjs down",
+    "seed": "node scripts/seed.mjs",
+    "sqlc": "cd apps/api && sqlc generate",
+    "api": "cd apps/api && go run ./cmd/server",
+    "worker": "cd apps/api && go run ./cmd/worker",
+    "web": "pnpm --filter web dev",
+    "dev": "pnpm run stack:up && pnpm run migrate:up && pnpm --parallel -r dev",
+    "test:api": "cd apps/api && go test ./... -count=1",
+    "test:isolation": "cd apps/api && go test ./internal/server -run \"Isolation|RLS\" -v -count=1",
+    "test": "pnpm run test:api && pnpm -r test",
+    "lint:api": "cd apps/api && golangci-lint run",
+    "lint": "pnpm run lint:api && pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "prettier": "^3",
+    "eslint": "^9"
+  }
+}

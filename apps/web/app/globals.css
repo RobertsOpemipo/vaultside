@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "@vaultside/design-tokens/tokens.css";
+
+@theme {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+html, body { height: 100%; }
+body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
