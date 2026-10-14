@@ -231,6 +231,7 @@ type submitAttemptResponse struct {
     Level             int                 `json:"level"`
     CurrentStreakDays int32               `json:"current_streak_days"`
     BadgesAwarded     []string            `json:"badges_awarded,omitempty"`
+    QuestsCompleted   []string            `json:"quests_completed,omitempty"`
 }
 
 func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
@@ -337,6 +338,7 @@ func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
     var xpAwarded int32
     streakDays := int32(0)
     var badgesAwarded []string
+	var questsCompleted []string
 
     if passed {
         awarded, _ := gamification.AwardOnce(
@@ -350,6 +352,15 @@ func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
         sr, err := gamification.TouchStreak(r.Context(), q, claims.TenantID, claims.UserID, time.Now())
         if err == nil {
             streakDays = sr.CurrentDays
+        }
+
+        qDone, qXP, qerr := gamification.ProgressQuestsForKind(
+            r.Context(), q, claims.TenantID, claims.UserID,
+            "quiz_pass", 1,
+        )
+        if qerr == nil {
+            questsCompleted = qDone
+            xpAwarded += qXP
         }
 
         ev, err := gamification.BadgeState(r.Context(), q, claims.TenantID, claims.UserID)
@@ -377,6 +388,7 @@ func SubmitAttempt(w http.ResponseWriter, r *http.Request) {
         Level:             level,
         CurrentStreakDays: streakDays,
         BadgesAwarded:     badgesAwarded,
+        QuestsCompleted:   questsCompleted,
     })
 }
 

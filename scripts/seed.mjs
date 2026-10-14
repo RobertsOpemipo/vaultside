@@ -18,6 +18,7 @@ const files = [
   "scripts/seed-phase3.sql",
   "scripts/seed-phase4.sql",
   "scripts/seed-gamification.sql",
+  "scripts/seed-quests.sql",
 ];
 
 for (const f of files) {

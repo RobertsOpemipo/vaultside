@@ -7,6 +7,7 @@ import (
 
     "github.com/vaultside/vaultside/apps/api/internal/auth"
     "github.com/vaultside/vaultside/apps/api/internal/db"
+    "github.com/vaultside/vaultside/apps/api/internal/gamification"
     "github.com/vaultside/vaultside/apps/api/internal/httpx"
 )
 
@@ -27,6 +28,14 @@ type questItem struct {
 func MyQuests(w http.ResponseWriter, r *http.Request) {
     claims := auth.MustFromContext(r.Context())
     q := httpx.MustQueries(r.Context())
+
+    // Lazy generation: creates rows for today's daily / this week's weekly /
+    // one-time onboarding quests if they don't exist yet.
+    if _, err := gamification.EnsureQuests(
+        r.Context(), q, claims.TenantID, claims.UserID, time.Now(),
+    ); err != nil {
+        log.Printf("me_quests: ensure: %v", err)
+    }
 
     active, err := q.ListActiveQuestsForUser(r.Context(), claims.UserID)
     if err != nil {
