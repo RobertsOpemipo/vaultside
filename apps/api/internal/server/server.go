@@ -67,7 +67,6 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         SecureCookies: opts.SecureCookies,
     }
 
-    // ---------------- /v1 ----------------
     r.Route("/v1", func(r chi.Router) {
         r.Get("/verify/{tenantSlug}/{code}", func(w http.ResponseWriter, req *http.Request) {
             handlers.PublicVerifyCertificate(w, req, pool)
@@ -156,17 +155,26 @@ func New(pool *pgxpool.Pool, opts Options) http.Handler {
         })
     })
 
-    // ---------------- /scim/v2 ----------------
     r.Route("/scim/v2", func(r chi.Router) {
         r.Use(auth.SCIMAuthMiddleware(pool))
         r.Use(httpx.WithTenantTx(pool))
 
         r.Get("/ServiceProviderConfig", handlers.SCIMServiceProviderConfig)
+        r.Get("/Schemas", handlers.SCIMListSchemas)
+        r.Get("/Schemas/{id}", handlers.SCIMGetSchema)
+        r.Get("/ResourceTypes", handlers.SCIMListResourceTypes)
+
         r.Get("/Users", handlers.SCIMListUsers)
         r.Post("/Users", handlers.SCIMCreateUser)
         r.Get("/Users/{id}", handlers.SCIMGetUser)
         r.Patch("/Users/{id}", handlers.SCIMPatchUser)
         r.Delete("/Users/{id}", handlers.SCIMDeleteUser)
+
+        r.Get("/Groups", handlers.SCIMListGroups)
+        r.Post("/Groups", handlers.SCIMCreateGroup)
+        r.Get("/Groups/{id}", handlers.SCIMGetGroup)
+        r.Patch("/Groups/{id}", handlers.SCIMPatchGroup)
+        r.Delete("/Groups/{id}", handlers.SCIMDeleteGroup)
     })
 
     return r

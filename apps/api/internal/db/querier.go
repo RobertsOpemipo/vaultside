@@ -12,9 +12,11 @@ import (
 )
 
 type Querier interface {
+	AddTeamMember(ctx context.Context, arg AddTeamMemberParams) error
 	ApproveOnboardingItem(ctx context.Context, arg ApproveOnboardingItemParams) (ApproveOnboardingItemRow, error)
 	AssignRole(ctx context.Context, arg AssignRoleParams) error
 	ClearDefaultSSOForTenant(ctx context.Context, tenantID uuid.UUID) error
+	ClearTeamMembers(ctx context.Context, teamID uuid.UUID) error
 	CountActiveCertificatesForUserVersion(ctx context.Context, arg CountActiveCertificatesForUserVersionParams) (int64, error)
 	CountAttestationsForUserRegulation(ctx context.Context, arg CountAttestationsForUserRegulationParams) (int64, error)
 	CountCompletedLessons(ctx context.Context, enrollmentID uuid.UUID) (int64, error)
@@ -41,9 +43,12 @@ type Querier interface {
 	CreateSCIMToken(ctx context.Context, arg CreateSCIMTokenParams) (CreateSCIMTokenRow, error)
 	CreateSSOConnection(ctx context.Context, arg CreateSSOConnectionParams) (CreateSSOConnectionRow, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (CreateSessionRow, error)
+	CreateTeam(ctx context.Context, arg CreateTeamParams) (CreateTeamRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteExpiredSessions(ctx context.Context) error
 	DeleteSSOConnection(ctx context.Context, id uuid.UUID) error
+	DeleteTeam(ctx context.Context, id uuid.UUID) error
+	FindUserForSCIM(ctx context.Context, arg FindUserForSCIMParams) (FindUserForSCIMRow, error)
 	GetAssessment(ctx context.Context, id uuid.UUID) (GetAssessmentRow, error)
 	GetAssessmentForVersion(ctx context.Context, versionID uuid.UUID) (GetAssessmentForVersionRow, error)
 	GetAssignmentRule(ctx context.Context, id uuid.UUID) (GetAssignmentRuleRow, error)
@@ -67,6 +72,8 @@ type Querier interface {
 	GetQuestion(ctx context.Context, id uuid.UUID) (Question, error)
 	GetRegulation(ctx context.Context, id uuid.UUID) (Regulation, error)
 	GetSSOConnection(ctx context.Context, id uuid.UUID) (SsoConnection, error)
+	GetTeam(ctx context.Context, id uuid.UUID) (GetTeamRow, error)
+	GetTeamByExternalID(ctx context.Context, externalID *string) (GetTeamByExternalIDRow, error)
 	GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error)
 	GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
@@ -100,6 +107,8 @@ type Querier interface {
 	ListRegulationsForCourse(ctx context.Context, courseID uuid.UUID) ([]ListRegulationsForCourseRow, error)
 	ListSCIMTokens(ctx context.Context) ([]ListSCIMTokensRow, error)
 	ListSSOConnections(ctx context.Context) ([]ListSSOConnectionsRow, error)
+	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
+	ListTeams(ctx context.Context) ([]ListTeamsRow, error)
 	ListTenants(ctx context.Context) ([]ListTenantsRow, error)
 	ListUserComplianceSnapshot(ctx context.Context) ([]ListUserComplianceSnapshotRow, error)
 	ListUserPermissions(ctx context.Context, userID uuid.UUID) ([]string, error)
@@ -112,6 +121,7 @@ type Querier interface {
 	NextAttemptNumber(ctx context.Context, arg NextAttemptNumberParams) (int32, error)
 	PatchUser(ctx context.Context, arg PatchUserParams) (uuid.UUID, error)
 	PublishCourseVersion(ctx context.Context, arg PublishCourseVersionParams) error
+	RemoveTeamMember(ctx context.Context, arg RemoveTeamMemberParams) error
 	ResolveTenantBySlug(ctx context.Context, slug string) (ResolveTenantBySlugRow, error)
 	RevokeCertificate(ctx context.Context, arg RevokeCertificateParams) error
 	RevokeSCIMToken(ctx context.Context, id uuid.UUID) error
@@ -124,6 +134,7 @@ type Querier interface {
 	TouchLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateLessonOrder(ctx context.Context, arg UpdateLessonOrderParams) error
 	UpdateSSOConnectionEnabled(ctx context.Context, arg UpdateSSOConnectionEnabledParams) error
+	UpdateTeamName(ctx context.Context, arg UpdateTeamNameParams) error
 	UpsertLessonProgress(ctx context.Context, arg UpsertLessonProgressParams) (UpsertLessonProgressRow, error)
 	UpsertOnboardingItemProgress(ctx context.Context, arg UpsertOnboardingItemProgressParams) (UpsertOnboardingItemProgressRow, error)
 }

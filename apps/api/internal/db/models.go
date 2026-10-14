@@ -384,6 +384,7 @@ type Team struct {
 	Name         string      `json:"name"`
 	DepartmentID pgtype.UUID `json:"department_id"`
 	CreatedAt    time.Time   `json:"created_at"`
+	ExternalID   *string     `json:"external_id"`
 }
 
 type TeamMember struct {
